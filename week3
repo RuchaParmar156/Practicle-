@@ -1,0 +1,85 @@
+task1
+Input:-const os = require('os');
+const fs = require('fs');
+const path = require('path');
+function getSystemInfo() {
+return {
+osType: os.type(),
+totalMemory: `${(os.totalmem() / (1024 **
+3)).toFixed(2)} GB`,
+freeMemory: `${(os.freemem() / (1024 **
+3)).toFixed(2)} GB`,
+cpuDetails: os.cpus()
+};
+}
+function saveSystemInfoToFile(info) {
+const logDir = path.join(__dirname, 'logs');
+const logFilePath = path.join(logDir,
+'system-info.txt');
+if (!fs.existsSync(logDir)) {
+fs.mkdirSync(logDir);
+}
+const logData = `System Information:
+OS Type: ${info.osType}
+Total Memory: ${info.totalMemory}
+Free Memory: ${info.freeMemory}
+CPU Details: ${JSON.stringify(info.cpuDetails, null,
+2)}
+`;
+fs.writeFileSync(logFilePath, logData, 'utf-8');
+console.log(`System information saved to
+${logFilePath}`);
+}
+const systemInfo = getSystemInfo();
+console.log('System Information:', systemInfo);
+saveSystemInfoToFile(systemInfo);
+task2
+Input:-const http = require('http');
+const fs = require('fs');
+const path = require('path');
+// Create the server
+const server = http.createServer((req, res) => {
+// Check if the requested file is an image or other static file
+let filePath = path.join(__dirname, req.url === '/' ? 'image1.jpg' : req.url); // Default to 'image1.jpg'
+// Get the file extension and set the appropriate content type
+const extname = path.extname(filePath);
+let contentType = 'application/octet-stream'; // Default content type
+switch (extname) {
+case '.jpg':
+case '.jpeg':
+contentType = 'image/jpeg';
+break;
+case '.png':
+contentType = 'image/png';
+break;
+case '.gif':
+contentType = 'image/gif';
+break;
+default:
+contentType = 'application/octet-stream'; // Default for unsupported files
+}
+// Read the requested file from the filesystem
+fs.readFile(filePath, (err, content) => {
+if (err) {
+if (err.code === 'ENOENT') {
+// If file not found, send a 404 error response
+res.writeHead(404, { 'Content-Type': 'text/plain' });
+res.end('404 - File Not Found', 'utf-8');
+} else {
+// Server error
+res.writeHead(500);
+res.end('500 - Server Error: ' + err.code);
+}
+} else {
+// If file is found, serve it
+res.writeHead(200, { 'Content-Type': contentType });
+res.end(content, 'utf-8');
+}
+});
+});
+// Define the port the server will listen to
+const port = 3000;
+// Start the server
+server.listen(port, () => {
+console.log(`Server running at http://localhost:${port}`);
+});
