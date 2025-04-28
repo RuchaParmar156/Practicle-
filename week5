@@ -1,0 +1,72 @@
+task1
+INPUT:const express = require('express'); const fs = require('fs');
+const path = require('path'); const app =
+express();
+const port = 3000;
+
+const logVisit = (req, res, next) => {
+const ip = req.ip || req.connection.remoteAddress; const timestamp = new
+Date().toISOString();
+const logEntry = `{ "ip": "${ip}", "time": "${timestamp}" }\n`;
+
+fs.appendFile(path.join( dirname, 'logs', 'visits.log'), logEntry, (err)
+=> {
+if (err) {
+console.error('Error writing to log file', err);
+}
+});
+next();
+};
+
+app.use(express.json()); app.use(express.static('public'));
+app.use(logVisit);
+
+app.get('/', (req, res) => {
+res.sendFile(path.join( dirname, 'public', 'index.html'));
+});
+
+app.get('/logs', (req, res) => {
+fs.readFile(path.join( dirname, 'logs', 'visits.log'), 'utf-8', (err, data) => {
+if (err) {
+return res.status(500).json({ error: 'Error reading log file' });
+}
+const logs = data.trim().split('\n').map(log => JSON.parse(log)); res.json(logs);
+});
+});
+
+app.listen(port, () => {
+console.log(`Server running at http://localhost:${port}`);
+});
+task2
+INPUT:const express = require('express'); const app = express();
+const port = 3000;
+
+const products = [
+{ id: 1, name: 'Laptop', category: 'electronics', price: 8000 },
+{ id: 2, name: 'Headphones', category: 'electronics', price: 500 },
+{ id: 3, name: 'Shirt', category: 'clothing', price: 300 },
+{ id: 4, name: 'Shoes', category: 'clothing', price: 600 }
+];
+
+app.get('/products', (req, res) => { const { category } =
+req.query;
+if (category) {
+const filteredProducts = products.filter(product => product.category === category);
+return res.json(filteredProducts);
+}
+res.json(products);
+});
+
+app.get('/products/:id', (req, res) => { const { id } =
+req.params;
+const product = products.find(product => product.id === parseInt(id));
+
+if (product) { res.json(product);
+} else {
+res.status(404).json({ message: 'Product not found' });
+}
+});
+
+app.listen(port, () => {
+console.log(`Server running at http://localhost:${port}`);
+});
