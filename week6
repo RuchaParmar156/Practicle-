@@ -1,0 +1,160 @@
+Tasks.json: 
+[ 
+  { 
+    "id": 2, 
+    " tle": "Build API", 
+    "status": "completed" 
+  }, 
+  { 
+    "id": 3, 
+    " tle": "1", 
+    "status": "in-progress" 
+  }, 
+  { 
+    "id": 4, 
+    " tle": "POST", 
+    "status": "completed" 
+  }, 
+  { "id": 5, 
+    " tle": "POST", 
+    "status": "completed" 
+  }, 
+  { 
+    "id": 6, 
+    " tle": "get", 
+    "status": "completed" 
+  }, 
+  { 
+    "id": 7, 
+    " tle": "put", 
+    "status": "in-progress" 
+  } 
+]Index.html: 
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+<meta charset="UTF-8"> 
+<meta name="viewport" content="width=device-width, ini al-scale=1.0"> 
+< tle>Create Task</ tle> 
+</head> 
+<body> 
+<h2>Create New Task</h2> 
+<form ac on="h p://localhost:3000/tasks" method="POST">   <label for=" tle">Task Title:</label> 
+        <input type="text" id=" tle" name=" tle" required><br><br> 
+ 
+        <label for="status">Status:</label> 
+        <select id="status" name="status" required> 
+            <op on value="pending">Pending</op on> 
+            <op on value="in-progress">In Progress</op on> 
+            <op on value="completed">Completed</op on> 
+        </select><br><br> 
+ 
+        <bu on type="submit">Create Task</bu on> 
+    </form> 
+</body> 
+</html>Update-task.html: 
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+   <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, ini al-scale=1.0"> 
+    < tle>Update Task</ tle> 
+</head> 
+<body> 
+    <h2>Update Task</h2> 
+    <form ac on="h p://localhost:3000/tasks/1" method="POST"> 
+        <label for=" tle">Task Title:</label> 
+        <input type="text" id=" tle" name=" tle" value="Old Task Title" required><br><br> 
+ 
+        <label for="status">Status:</label> 
+        <select id="status" name="status" required> 
+            <op on value="pending">Pending</op on> 
+            <op on value="in-progress">In Progress</op on> 
+            <op on value="completed">Completed</op on> 
+        </select><br><br> 
+ 
+        <bu on type="submit">Update Task</bu on> 
+    </form> 
+</body> 
+</html>Server.js: 
+const express = require('express'); 
+const bodyParser = require('body-parser'); 
+const fs = require('fs'); 
+const app = express(); 
+// Middleware for parsing JSON and URL-encoded data 
+app.use(bodyParser.json()); 
+app.use(bodyParser.urlencoded({ extended: true })); 
+// Load tasks from tasks.json 
+func on loadTasks() { 
+const tasksData = fs.readFileSync('./data/tasks.json', 'u 8'); 
+return JSON.parse(tasksData); 
+} 
+// Save tasks to tasks.json 
+func on saveTasks(tasks) { 
+fs.writeFileSync('./data/tasks.json', JSON.stringify(tasks, null, 2)); 
+}// CRUD Routes 
+ 
+// Get all tasks 
+app.get('/tasks', (req, res) => { 
+    const tasks = loadTasks(); 
+    res.status(200).json(tasks); 
+}); 
+ 
+// Get a specific task 
+app.get('/tasks/:id', (req, res) => { 
+    const tasks = loadTasks(); 
+    const task = tasks.find(t => t.id === parseInt(req.params.id)); 
+    if (!task) { 
+        return res.status(404).json({ message: 'Task not found' }); 
+    } 
+    res.status(200).json(task); 
+}); 
+ 
+// Create a new task 
+app.post('/tasks', (req, res) => { 
+    const { tle, status } = req.body; 
+    if (! tle || !status) { 
+        return res.status(400).json({ message: 'Title and status are required' }); 
+    } 
+ 
+    const tasks = loadTasks(); 
+    const newTask = { 
+        id: tasks.length + 1, 
+        tle, 
+        status,   }; 
+    tasks.push(newTask); 
+    saveTasks(tasks); 
+    res.status(201).json(newTask); 
+}); 
+ 
+// Update an exis ng task 
+app.put('/tasks/:id', (req, res) => { 
+    const { tle, status } = req.body; 
+    const tasks = loadTasks(); 
+    const taskIndex = tasks.findIndex(t => t.id === parseInt(req.params.id)); 
+    if (taskIndex === -1) { 
+        return res.status(404).json({ message: 'Task not found' }); 
+    } 
+ 
+    tasks[taskIndex] = { ...tasks[taskIndex], tle, status }; 
+    saveTasks(tasks); 
+    res.status(200).json(tasks[taskIndex]); 
+}); 
+ 
+// Delete a task 
+app.delete('/tasks/:id', (req, res) => { 
+    const tasks = loadTasks(); 
+    const taskIndex = tasks.findIndex(t => t.id === parseInt(req.params.id)); 
+    if (taskIndex === -1) { 
+        return res.status(404).json({ message: 'Task not found' }); 
+    } 
+ 
+    tasks.splice(taskIndex, 1); 
+    saveTasks(tasks); 
+    res.status(204).send(); 
+}); 
+// Server listen on port 3000 
+const port = 3000; 
+app.listen(port, () => { 
+console.log(`Server running on port ${port}`); 
+}); 
